@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SiamAC Chatbot - Admin An Project (Full Stack)</title>
+    <title>SiamAC Chatbot - Admin An Project (Stateless)</title>
     <style>
-        /* CSS (ĐÃ TỐI ƯU VÀ THÊM CODE BLOCK) */
+        /* CSS (ĐÃ TỐI ƯU GIAO DIỆN CHAT ĐỘC LẬP) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #e9ecef;
@@ -22,21 +22,9 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             width: 100%;
-            max-width: 400px;
-            padding: 30px;
-            text-align: center;
-        }
-
-        /* Giao diện Chat */
-        #chatbot-interface {
-            display: none; 
-            max-width: 600px;
-            width: 100%;
+            max-width: 600px; /* Đặt lại max-width cho giao diện độc lập */
             padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
-            background-color: #ffffff;
-            border-radius: 15px;
-            display: flex;
+            display: flex; /* Đảm bảo giao diện chat chiếm toàn bộ không gian */
             flex-direction: column;
             justify-content: space-between;
             height: 90vh;
@@ -70,7 +58,15 @@
         }
         #send-button {
             width: 100px;
+            background-color: #28a745; 
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
+        #send-button:hover { background-color: #218838; }
 
         /* Message */
         .message {
@@ -99,7 +95,7 @@
             padding: 0; 
         }
 
-        /* CODE BLOCK (Tối ưu giao diện) */
+        /* CODE BLOCK */
         .code-block {
             background-color: #272822; 
             color: #f8f8f2; 
@@ -134,9 +130,7 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        .copy-code-btn:hover {
-            background-color: #0056b3;
-        }
+        .copy-code-btn:hover { background-color: #0056b3; }
 
         /* Utility */
         .utility-buttons {
@@ -153,24 +147,14 @@
             margin-right: 10px;
         }
         
-        /* Typing, Analysis, Auth (Giữ nguyên) */
+        /* Typing, Analysis */
         .typing-indicator {
-            display: flex;
-            align-items: center;
-            margin-right: auto;
-            background-color: #e9ecef;
-            padding: 8px 15px;
-            border-radius: 18px;
-            width: 80px;
-            margin-bottom: 15px;
+            display: flex; align-items: center; margin-right: auto; background-color: #e9ecef;
+            padding: 8px 15px; border-radius: 18px; width: 80px; margin-bottom: 15px;
         }
         .dot {
-            width: 8px;
-            height: 8px;
-            margin: 0 2px;
-            background-color: #6c757d;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
+            width: 8px; height: 8px; margin: 0 2px; background-color: #6c757d;
+            border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both;
         }
         .dot:nth-child(1) { animation-delay: -0.32s; }
         .dot:nth-child(2) { animation-delay: -0.16s; }
@@ -179,41 +163,22 @@
             40% { transform: scale(1.0); }
         }
         .analysis-status {
-            background-color: #ffc107;
-            color: #343a40;
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            font-size: 0.9em;
-            display: inline-block;
+            background-color: #ffc107; color: #343a40; padding: 5px 10px; border-radius: 5px;
+            margin-bottom: 10px; font-size: 0.9em; display: inline-block;
         }
-        /* Auth styles */
-        input[type="email"], input[type="password"] {
-            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 8px; box-sizing: border-box;
+        #header-title {
+            color: #007bff; 
+            margin: 0; 
+            text-align: center;
         }
-        .auth-button, #send-button, #logout-button {
-            width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; margin-top: 10px;
-        }
-        .auth-button.primary { background-color: #007bff; color: white; }
-        .auth-button.primary:hover { background-color: #0056b3; }
-        .auth-button.secondary { background-color: #6c757d; color: white; }
-        .auth-button.secondary:hover { background-color: #5a6268; }
-        #google-login-btn { background-color: #db4437; color: white; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
-        #google-login-btn:hover { background-color: #c0392b; }
-        #google-login-btn img { margin-right: 10px; width: 18px; }
-        #send-button { background-color: #28a745; color: white; }
-        #send-button:hover { background-color: #218838; }
-        #logout-button { background-color: #dc3545; color: white; }
-        #logout-button:hover { background-color: #c82333; }
 
     </style>
 </head>
 <body>
 
 <div id="chatbot-interface" class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h2 style="color: #007bff; margin: 0;">SiamAC Chat (Admin An)</h2>
-        <button id="logout-button">Đăng xuất</button>
+    <div style="margin-bottom: 15px;">
+        <h2 id="header-title">SiamAC Chat (Admin An Project)</h2>
     </div>
 
     <div id="chat-window">
@@ -225,103 +190,23 @@
     </div>
 </div>
 
-<div id="auth-interface" class="container">
-    <h2>Chào mừng, Đăng nhập để sử dụng SiamAC</h2>
-    <button id="google-login-btn" class="auth-button">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google Logo">
-        Đăng nhập bằng Google
-    </button>
-    <div style="margin: 10px 0; font-weight: bold; color: #6c757d;">HOẶC</div>
-    <input type="email" id="auth-email" placeholder="Email">
-    <input type="password" id="auth-password" placeholder="Mật khẩu">
-    <button id="login-btn" class="auth-button primary">Đăng nhập Email</button>
-    <button id="register-btn" class="auth-button secondary">Đăng ký Email</button>
-    <p id="auth-error" style="color: red; margin-top: 15px;"></p>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script> 
-
-<script>
-    // Cấu hình Firebase (SỬ DỤNG CONFIG ADMIN ĐÃ CUNG CẤP)
-    const firebaseConfig = {
-        apiKey: "AIzaSyBltSXv-DFtoIyZXvJIu7Tihk-aLvTQNpU",
-        authDomain: "siamac-23b3a.firebaseapp.com",
-        projectId: "siamac-23b3a",
-        databaseURL: "https://siamac-23b3a-default-rtdb.firebaseio.com", 
-        storageBucket: "siamac-23b3a.firebasestorage.app",
-        messagingSenderId: "1015962876426",
-        appId: "1:1015962876426:web:778989e963bf7c45f6fdf3",
-        measurementId: "G-SWLJPESFZ6"
-    };
-    
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = app.auth();
-    const db = firebase.database(); 
-    const googleProvider = new firebase.auth.GoogleAuthProvider();
-</script>
-
 <script>
     // --- CẤU HÌNH GEMINI ---
     const GEMINI_API_KEY = "AIzaSyD_3oYeAFsZ3y2c4_0PuW1SaIH6U3fiqYc"; 
     const MODEL_NAME = 'gemini-2.5-flash';
     let history = []; 
-    let tts = null; 
-    let currentUserId = null; 
+    let tts = null; // Khai báo biến tts toàn cục
+    let currentSpeakingButton = null; // Theo dõi nút đang nói
 
     // --- CẤU HÌNH GIAO DIỆN ---
     const chatWindow = document.getElementById('chat-window');
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-button');
-    const authInterface = document.getElementById('auth-interface');
-    const chatbotInterface = document.getElementById('chatbot-interface');
-    const authError = document.getElementById('auth-error');
 
-    // Hàm lưu tin nhắn vào Firebase Database
-    function saveMessageToDb(sender, text) {
-        if (currentUserId) {
-            const chatRef = db.ref('chats/' + currentUserId);
-            const newMessage = {
-                sender: sender,
-                text: text,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-            chatRef.push(newMessage);
-        }
-    }
-
-    // Hàm tải lịch sử chat từ Firebase Database
-    function loadHistoryFromDb() {
-        if (currentUserId) {
-            chatWindow.innerHTML = ''; 
-            const chatRef = db.ref('chats/' + currentUserId).limitToLast(100); 
-            chatRef.once('value', (snapshot) => {
-                let loadedHistory = [];
-                snapshot.forEach((childSnapshot) => {
-                    const msg = childSnapshot.val();
-                    displayMessage(msg.text, msg.sender, false);
-                    if (msg.sender === 'user') {
-                        loadedHistory.push({ role: 'user', parts: [{ text: msg.text }] });
-                    } else if (msg.sender === 'ai') {
-                        loadedHistory.push({ role: 'model', parts: [{ text: msg.text }] });
-                    }
-                });
-                history = loadedHistory;
-                // Nếu không có lịch sử cũ, hiển thị lời chào và system prompt
-                if (loadedHistory.length === 0) {
-                    initializeHistory(true); 
-                } else {
-                    initializeHistory(false); 
-                }
-            });
-        }
-    }
-    
-    // Hàm khởi tạo lịch sử và System Prompt (Sửa lỗi cú pháp)
-    function initializeHistory(isNewSession = true) {
-        // System Prompt luôn được đặt ở đầu lịch sử
-        history.unshift({ 
+    // Hàm System Prompt (giữ nguyên)
+    function initializeHistory() {
+        history = [];
+        history.push({ 
             role: 'user', 
             parts: [{ 
                 text: `
@@ -343,63 +228,14 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
             }] 
         });
         
-        if (isNewSession) {
-            displayMessage("Chào mừng trở lại! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ.", 'ai', false);
-            saveMessageToDb('ai', "Chào mừng trở lại! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ.");
-        }
+        displayMessage("Chào mừng! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ Admin.", 'ai', false);
     }
     
-    // --- CHỨC NĂNG FIREBASE AUTHENTICATION ---
-    
-    document.getElementById('login-btn').addEventListener('click', () => {
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-        auth.signInWithEmailAndPassword(email, password)
-            .then(() => { authError.textContent = ''; })
-            .catch(error => { authError.textContent = `Đăng nhập Email thất bại: ${error.message}`; });
-    });
+    // Tự động khởi tạo khi tải trang
+    initializeHistory();
 
-    document.getElementById('register-btn').addEventListener('click', () => {
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-        auth.createUserWithEmailAndPassword(email, password)
-            .then(() => { authError.textContent = 'Đăng ký thành công! Vui lòng đăng nhập.'; })
-            .catch(error => { authError.textContent = `Đăng ký Email thất bại: ${error.message}`; });
-    });
-    
-    document.getElementById('google-login-btn').addEventListener('click', () => {
-        auth.signInWithPopup(googleProvider)
-            .then((result) => { authError.textContent = ''; })
-            .catch((error) => { authError.textContent = `Đăng nhập Google thất bại: ${error.message}`; });
-    });
 
-    document.getElementById('logout-button').addEventListener('click', () => {
-        if (tts) tts.cancel();
-        auth.signOut();
-    });
-
-    // Theo dõi trạng thái đăng nhập
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUserId = user.uid; 
-            authInterface.style.display = 'none';
-            chatbotInterface.style.display = 'flex';
-            document.body.style.justifyContent = 'flex-start';
-            document.body.style.alignItems = 'center';
-            loadHistoryFromDb(); 
-            userInput.focus();
-        } else {
-            currentUserId = null;
-            authInterface.style.display = 'block';
-            chatbotInterface.style.display = 'none';
-            document.body.style.justifyContent = 'center';
-            document.body.style.alignItems = 'center';
-            // Đảm bảo cửa sổ chat trống khi đăng xuất
-            chatWindow.innerHTML = ''; 
-        }
-    });
-
-    // --- CÁC CHỨC NĂNG CHATBOT (ĐÃ CẬP NHẬT CODE BLOCK VÀ LƯU TRỮ) ---
+    // --- CÁC CHỨC NĂNG CHATBOT (ĐÃ SỬA LỖI TTS) ---
     
     function displayMessage(text, sender, isTyping = true, messageId = null) {
         const msgDiv = document.createElement('div');
@@ -415,11 +251,10 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
             chatWindow.scrollTop = chatWindow.scrollHeight;
             return { element: msgDiv, indicator: typingIndicator };
         } else {
-            // Phân tích nội dung để tạo Code Block chuyên nghiệp
             if (sender === 'ai') {
-                msgDiv.innerHTML = parseAndFormatAiResponse(text, messageId);
+                // messageId chỉ cần thiết cho TTS
+                msgDiv.innerHTML = parseAndFormatAiResponse(text, messageId || Date.now()); 
             } else {
-                // Tin nhắn người dùng
                 msgDiv.innerHTML = `<div class="message-content" style="white-space: pre-wrap;">${text}</div>`;
             }
 
@@ -429,28 +264,24 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
         }
     }
     
-    // HÀM MỚI: Tách code và văn bản
+    // Tách code và văn bản (Giữ nguyên logic Code Block)
     function parseAndFormatAiResponse(fullText, messageId) {
         const codeBlockRegex = /```([a-zA-Z]+)?\n([\s\S]*?)```/g;
         let htmlContent = '';
         let lastIndex = 0;
         let match;
 
-        // Xóa các button đọc/sao chép cũ nếu có
         const strippedText = fullText.replace(/<button.*?>.*?<\/button>/g, '').trim();
 
         while ((match = codeBlockRegex.exec(strippedText)) !== null) {
-            // 1. Thêm phần văn bản trước code block
             const textBefore = strippedText.substring(lastIndex, match.index).trim();
             if (textBefore) {
                 htmlContent += `<div class="message-content" style="white-space: pre-wrap; padding: 15px;">${textBefore}</div>`;
             }
 
-            // 2. Thêm Code Block
             const language = match[1] || 'Code';
             const codeContent = match[2];
             
-            // Sử dụng backtick trong template string để tránh xung đột với các dấu nháy đơn/kép
             htmlContent += `
                 <div class="code-block">
                     <div class="code-block-header">
@@ -465,13 +296,12 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
             lastIndex = match.index + match[0].length;
         }
 
-        // 3. Thêm phần văn bản cuối cùng (nếu có)
         const textAfter = strippedText.substring(lastIndex).trim();
         if (textAfter) {
              htmlContent += `<div class="message-content" style="white-space: pre-wrap; padding: 15px;">${textAfter}</div>`;
         }
 
-        // 4. Thêm nút Đọc (chỉ Đọc toàn bộ văn bản gốc đã loại bỏ HTML/Code)
+        // Thêm nút Đọc
         htmlContent += `
             <div class="utility-buttons">
                 <button id="read-btn-${messageId}" onclick="readText(this, \`${strippedText.replace(/`/g, '\\`')}\`, '${messageId}')">🔊 Đọc</button>
@@ -485,14 +315,12 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
     function finishTyping(msgElement, indicatorElement, finalText, messageId) {
         msgElement.innerHTML = parseAndFormatAiResponse(finalText, messageId);
         msgElement.classList.remove('typing-placeholder');
-        
-        saveMessageToDb('ai', finalText);
-
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
     
     let analysisStatusElement = null;
     function showAnalysisStatus(show) {
+        // (Logic showAnalysisStatus giữ nguyên)
         if (show) {
             if (!analysisStatusElement) {
                 analysisStatusElement = document.createElement('div');
@@ -508,6 +336,15 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
     }
 
     async function sendMessage() {
+        if (tts && tts.speaking) {
+            window.speechSynthesis.cancel();
+            // Nếu đang đọc, dừng lại và reset nút
+            if (currentSpeakingButton) {
+                currentSpeakingButton.textContent = '🔊 Đọc';
+                currentSpeakingButton = null;
+            }
+        }
+        
         const message = userInput.value.trim();
         if (!message) return;
 
@@ -516,7 +353,6 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
         const messageId = Date.now();
 
         displayMessage(message, 'user', false);
-        saveMessageToDb('user', message); 
 
         showAnalysisStatus(true);
         const aiMessageContainer = displayMessage('', 'ai', true, messageId);
@@ -571,8 +407,9 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
     
     // --- CHỨC NĂNG TIỆN ÍCH ---
 
-    // Hàm sao chép Code Block
     function copyCodeBlock(button, codeText) {
+        if (tts && tts.speaking) window.speechSynthesis.cancel();
+        
         const textarea = document.createElement('textarea');
         textarea.value = codeText;
         document.body.appendChild(textarea);
@@ -584,24 +421,33 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
         setTimeout(() => {
             button.textContent = '📋 Sao chép';
         }, 2000);
-        
-        if (tts) tts.cancel();
     }
     
-    // Hàm đọc văn bản
+    // HÀM SỬA LỖI ĐỌC/DỪNG ĐỌC (QUAN TRỌNG)
     function readText(button, text, messageId) {
         if (!'speechSynthesis' in window) {
             alert('Trình duyệt của bạn không hỗ trợ chức năng đọc văn bản.');
             return;
         }
 
-        if (tts && tts.speaking) {
-            tts.cancel();
-            button.textContent = '🔊 Đọc';
+        // 1. Nếu đang có giọng nói và giọng nói đó là của nút hiện tại: Dừng lại.
+        if (tts && tts.speaking && currentSpeakingButton === button) {
+            window.speechSynthesis.cancel();
+            currentSpeakingButton = null;
             return;
+        } 
+        
+        // 2. Nếu đang có giọng nói khác: Dừng giọng nói cũ và reset nút cũ.
+        if (tts && tts.speaking) {
+             window.speechSynthesis.cancel();
+             if (currentSpeakingButton) {
+                currentSpeakingButton.textContent = '🔊 Đọc';
+             }
         }
-
+        
+        // 3. Chuẩn bị giọng nói mới
         tts = new SpeechSynthesisUtterance(text);
+        
         const voices = window.speechSynthesis.getVoices();
         const vietnameseVoice = voices.find(voice => voice.lang === 'vi-VN' || voice.name.includes('Vietnamese'));
         if (vietnameseVoice) {
@@ -610,12 +456,35 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
             tts.lang = 'vi-VN'; 
         }
         
-        tts.onstart = () => { button.textContent = '⏸️ Dừng đọc'; };
-        tts.onend = () => { button.textContent = '🔊 Đọc'; };
-        tts.onerror = (event) => { console.error('Lỗi TTS:', event); button.textContent = '🔊 Đọc (Lỗi)'; };
+        // 4. Cập nhật trạng thái
+        currentSpeakingButton = button;
+        
+        tts.onstart = () => { 
+            currentSpeakingButton.textContent = '⏸️ Dừng đọc'; 
+        };
+        tts.onend = () => { 
+            currentSpeakingButton.textContent = '🔊 Đọc'; 
+            currentSpeakingButton = null; // Hoàn thành, reset trạng thái
+        };
+        tts.onerror = (event) => { 
+            console.error('Lỗi TTS:', event); 
+            button.textContent = '🔊 Đọc (Lỗi)'; 
+            currentSpeakingButton = null; // Lỗi, reset trạng thái
+        };
 
         window.speechSynthesis.speak(tts);
     }
+
+    // Load lại voices sau khi DOM đã sẵn sàng
+    window.onload = function() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            // Lấy lại voices khi cần (đôi khi trình duyệt cần thời gian để tải)
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+    };
 </script>
 
 </body>
