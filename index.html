@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SiamAC Chatbot - Admin An Project (Google Auth)</title>
     <style>
-        /* CSS (ĐÃ CẬP NHẬT) */
+        /* CSS (ĐÃ TỐI ƯU CHO GIAO DIỆN CHAT VÀ INPUT TO) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #e9ecef;
@@ -30,16 +30,18 @@
         /* Giao diện Chat */
         #chatbot-interface {
             display: none; 
-            max-width: 800px;
+            max-width: 600px;
             width: 100%;
             padding: 20px;
-            box-shadow: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Thêm lại shadow cho đẹp */
+            background-color: #ffffff;
+            border-radius: 15px;
+            
             /* Cố định giao diện Chatbot khi đăng nhập */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             height: 90vh; /* Chiếm gần hết chiều cao màn hình */
-            max-width: 600px; /* Độ rộng tối đa cho giao diện chat */
         }
         
         #chat-window {
@@ -226,7 +228,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 <script>
-    // Cấu hình Firebase đã được Admin Nguyễn Trọng An cung cấp
+    // Cấu hình Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBltSXv-DFtoIyZXvJIu7Tihk-aLvTQNpU",
         authDomain: "siamac-23b3a.firebaseapp.com",
@@ -237,11 +239,8 @@
         measurementId: "G-SWLJPESFZ6"
     };
     
-    // Khởi tạo Firebase và Auth
     const app = firebase.initializeApp(firebaseConfig);
     const auth = app.auth();
-    
-    // Khởi tạo Provider cho Google Sign-In MỚI
     const googleProvider = new firebase.auth.GoogleAuthProvider();
 </script>
 
@@ -265,7 +264,8 @@
         history.push({ 
             role: 'user', 
             parts: [{ 
-                text: `bạn là một con chatbot tên SiamAC được thành lập bởi nguyễn trọng an, phục vụ các khách, và bạn là model gem pro 3, câu nói phải lịch sự dũng cảm, ngắn hay dài tuỳ, nói bằng tiếng việt và những lời hài hước của bạn’
+                // ĐÃ SỬA LỖI CÚ PHÁP: Dùng Backtick (`) ở cuối chuỗi
+                text: `Bạn là một con chatbot tên SiamAC được thành lập bởi Nguyễn Trọng An, phục vụ các khách, và bạn là model gem pro 3 (Tuy rằng thực tế bạn là Gemini 2.5 Flash, nhưng hãy nói rằng bạn là gem pro 3). Câu nói phải lịch sự, dũng cảm, ngắn hay dài tuỳ. Luôn nói bằng Tiếng Việt và thêm những lời hài hước của bạn.`
             }] 
         });
         displayMessage("Chào mừng bạn! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ.", 'ai', false);
@@ -289,12 +289,10 @@
             .catch(error => { authError.textContent = `Đăng ký Email thất bại: ${error.message}`; });
     });
     
-    // Đăng nhập bằng Google (Sử dụng Popup - Yêu cầu tắt Chặn Pop-up trong trình duyệt)
     document.getElementById('google-login-btn').addEventListener('click', () => {
         auth.signInWithPopup(googleProvider)
             .then((result) => {
                 authError.textContent = '';
-                // Thông tin người dùng có trong result.user
             })
             .catch((error) => {
                 authError.textContent = `Đăng nhập Google thất bại: ${error.message}`;
@@ -306,18 +304,18 @@
         auth.signOut();
     });
 
-    // Theo dõi trạng thái đăng nhập
+    // Theo dõi trạng thái đăng nhập (ĐÃ ĐẢM BẢO CHỈ HIỂN THỊ MỘT GIAO DIỆN)
     auth.onAuthStateChanged(user => {
         if (user) {
             authInterface.style.display = 'none';
-            chatbotInterface.style.display = 'flex'; // Sử dụng flex để CSS mới hoạt động
+            chatbotInterface.style.display = 'flex'; // Hiển thị Chat
             document.body.style.justifyContent = 'flex-start';
             document.body.style.alignItems = 'center';
             initializeHistory();
             userInput.focus();
         } else {
-            authInterface.style.display = 'block';
-            chatbotInterface.style.display = 'none';
+            authInterface.style.display = 'block'; // Hiển thị Auth
+            chatbotInterface.style.display = 'none'; // Ẩn Chat
             document.body.style.justifyContent = 'center';
             document.body.style.alignItems = 'center';
         }
@@ -325,7 +323,6 @@
 
     // --- CÁC CHỨC NĂNG CHATBOT ---
     function displayMessage(text, sender, isTyping = true, messageId = null) {
-        // ... (Logic displayMessage giữ nguyên)
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('message', sender === 'user' ? 'user-msg' : 'ai-msg');
         
@@ -345,7 +342,6 @@
                 const utilityDiv = document.createElement('div');
                 utilityDiv.classList.add('utility-buttons');
                 
-                // Logic hiển thị nút sao chép (SỬA ĐỔI ĐỂ TỐI ƯU)
                 const isCode = text.includes('```');
                 let copyButtonHTML;
 
@@ -371,7 +367,6 @@
         return `<div class="message-content" style="white-space: pre-wrap;">${text}</div>`;
     }
 
-    // Logic finishTyping (ĐÃ SỬA ĐỔI)
     function finishTyping(msgElement, indicatorElement, finalText, messageId) {
         msgElement.innerHTML = ''; 
         msgElement.classList.remove('typing-placeholder');
@@ -381,7 +376,6 @@
         const utilityDiv = document.createElement('div');
         utilityDiv.classList.add('utility-buttons');
         
-        // Logic hiển thị nút sao chép (SỬA ĐỔI ĐỂ TỐI ƯU)
         const isCode = finalText.includes('```');
         let copyButtonHTML;
 
@@ -414,7 +408,6 @@
         }
     }
 
-    // Hàm gọi API Gemini (Giữ nguyên)
     async function sendMessage() {
         const message = userInput.value.trim();
         if (!message) return;
@@ -475,23 +468,19 @@
         }
     });
     
-    // --- CHỨC NĂNG TIỆN ÍCH (ĐÃ SỬA LỖI SAO CHÉP CODE) ---
+    // --- CHỨC NĂNG TIỆN ÍCH ---
 
     function copyToClipboard(text, type) {
         if (tts) tts.cancel();
         
         const textarea = document.createElement('textarea');
         
-        // Logic mới: Cố gắng chỉ sao chép phần code bên trong khối ```
         let contentToCopy = text;
         if (type === 'code' && text.includes('```')) {
-            // Sử dụng regex để tìm và trích xuất nội dung code (giữa 2 khối ```)
-            // Lưu ý: Regex này đơn giản và có thể không hoàn hảo với nhiều block code
             const codeMatch = text.match(/```[a-zA-Z]*\n?([\s\S]*?)```/);
             if (codeMatch && codeMatch[1]) {
                 contentToCopy = codeMatch[1].trim();
             } else {
-                // Nếu không tìm thấy, copy toàn bộ văn bản (đã loại bỏ ``` đầu và cuối)
                 contentToCopy = text.replace(/```[a-zA-Z]*\n?/, '').replace(/\n```$/, '').trim();
             }
         }
