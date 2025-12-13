@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SiamAC Chatbot - Admin An Project (Google Auth)</title>
     <style>
-        /* CSS (giữ nguyên, chỉ thêm style cho nút Google) */
+        /* CSS (ĐÃ CẬP NHẬT) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #e9ecef;
@@ -34,12 +34,16 @@
             width: 100%;
             padding: 20px;
             box-shadow: none;
+            /* Cố định giao diện Chatbot khi đăng nhập */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 90vh; /* Chiếm gần hết chiều cao màn hình */
+            max-width: 600px; /* Độ rộng tối đa cho giao diện chat */
         }
         
-        /* ... Các styles chat, message, typing, v.v. (giữ nguyên) ... */
-
         #chat-window {
-            height: 450px;
+            height: 100%; /* Chiếm phần lớn không gian */
             overflow-y: auto;
             border: 1px solid #ced4da;
             padding: 15px;
@@ -47,8 +51,28 @@
             border-radius: 10px;
             background-color: #f8f9fa;
             scroll-behavior: smooth;
+            flex-grow: 1; /* Cho phép nó mở rộng */
+        }
+        
+        /* Khung nhập liệu (ĐÃ LÀM TO HƠN) */
+        #input-area {
+            display: flex;
+            gap: 10px;
+            padding-top: 10px;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 12px; /* Tăng padding để làm to hơn */
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px; /* Tăng kích thước font */
+        }
+        #send-button {
+            width: 100px; /* Cố định chiều rộng */
         }
 
+        /* Các styles khác (Giữ nguyên) */
         .message {
             margin-bottom: 15px;
             padding: 10px 15px;
@@ -174,8 +198,10 @@
     <div id="chat-window">
         </div>
     
-    <input type="text" id="user-input" placeholder="Nhập tin nhắn của bạn...">
-    <button id="send-button">Gửi</button>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Nhập tin nhắn của bạn...">
+        <button id="send-button">Gửi</button>
+    </div>
 </div>
 
 <div id="auth-interface" class="container">
@@ -235,7 +261,6 @@
     const authError = document.getElementById('auth-error');
 
     function initializeHistory() {
-        // ... (Giữ nguyên logic khởi tạo history)
         history = [];
         history.push({ 
             role: 'user', 
@@ -246,9 +271,8 @@
         displayMessage("Chào mừng bạn! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ.", 'ai', false);
     }
     
-    // --- CHỨC NĂNG FIREBASE AUTHENTICATION (CẬP NHẬT) ---
+    // --- CHỨC NĂNG FIREBASE AUTHENTICATION ---
     
-    // Đăng nhập/Đăng ký Email (Giữ nguyên)
     document.getElementById('login-btn').addEventListener('click', () => {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
@@ -265,7 +289,7 @@
             .catch(error => { authError.textContent = `Đăng ký Email thất bại: ${error.message}`; });
     });
     
-    // Đăng nhập bằng Google (MỚI)
+    // Đăng nhập bằng Google (Sử dụng Popup - Yêu cầu tắt Chặn Pop-up trong trình duyệt)
     document.getElementById('google-login-btn').addEventListener('click', () => {
         auth.signInWithPopup(googleProvider)
             .then((result) => {
@@ -282,11 +306,11 @@
         auth.signOut();
     });
 
-    // Theo dõi trạng thái đăng nhập (Giữ nguyên)
+    // Theo dõi trạng thái đăng nhập
     auth.onAuthStateChanged(user => {
         if (user) {
             authInterface.style.display = 'none';
-            chatbotInterface.style.display = 'block';
+            chatbotInterface.style.display = 'flex'; // Sử dụng flex để CSS mới hoạt động
             document.body.style.justifyContent = 'flex-start';
             document.body.style.alignItems = 'center';
             initializeHistory();
@@ -299,7 +323,7 @@
         }
     });
 
-    // --- CÁC CHỨC NĂNG CHATBOT (Giữ nguyên) ---
+    // --- CÁC CHỨC NĂNG CHATBOT ---
     function displayMessage(text, sender, isTyping = true, messageId = null) {
         // ... (Logic displayMessage giữ nguyên)
         const msgDiv = document.createElement('div');
@@ -320,11 +344,20 @@
             if (sender === 'ai') {
                 const utilityDiv = document.createElement('div');
                 utilityDiv.classList.add('utility-buttons');
-                utilityDiv.innerHTML = `
-                    <button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}', 'text')">📋 Sao chép văn bản</button>
-                    <button onclick="copyToClipboard(this.parentNode.parentNode.querySelector('.message-content').textContent, 'code')">💻 Sao chép code</button>
-                    <button id="read-btn-${messageId}" onclick="readText(this, '${text.replace(/'/g, "\\'")}', '${messageId}')">🔊 Đọc</button>
-                `;
+                
+                // Logic hiển thị nút sao chép (SỬA ĐỔI ĐỂ TỐI ƯU)
+                const isCode = text.includes('```');
+                let copyButtonHTML;
+
+                if (isCode) {
+                    copyButtonHTML = `<button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}', 'code')">💻 Sao chép Code</button>`;
+                } else {
+                    copyButtonHTML = `<button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}', 'text')">📋 Sao chép Văn bản</button>`;
+                }
+
+                utilityDiv.innerHTML = copyButtonHTML + 
+                                       `<button id="read-btn-${messageId}" onclick="readText(this, '${text.replace(/'/g, "\\'")}', '${messageId}')">🔊 Đọc</button>`;
+                
                 msgDiv.appendChild(utilityDiv);
             }
 
@@ -338,6 +371,7 @@
         return `<div class="message-content" style="white-space: pre-wrap;">${text}</div>`;
     }
 
+    // Logic finishTyping (ĐÃ SỬA ĐỔI)
     function finishTyping(msgElement, indicatorElement, finalText, messageId) {
         msgElement.innerHTML = ''; 
         msgElement.classList.remove('typing-placeholder');
@@ -346,11 +380,20 @@
         
         const utilityDiv = document.createElement('div');
         utilityDiv.classList.add('utility-buttons');
-        utilityDiv.innerHTML = `
-            <button onclick="copyToClipboard('${finalText.replace(/'/g, "\\'")}', 'text')">📋 Sao chép văn bản</button>
-            <button onclick="copyToClipboard(this.parentNode.parentNode.querySelector('.message-content').textContent, 'code')">💻 Sao chép code</button>
-            <button id="read-btn-${messageId}" onclick="readText(this, '${finalText.replace(/'/g, "\\'")}', '${messageId}')">🔊 Đọc</button>
-        `;
+        
+        // Logic hiển thị nút sao chép (SỬA ĐỔI ĐỂ TỐI ƯU)
+        const isCode = finalText.includes('```');
+        let copyButtonHTML;
+
+        if (isCode) {
+            copyButtonHTML = `<button onclick="copyToClipboard('${finalText.replace(/'/g, "\\'")}', 'code')">💻 Sao chép Code</button>`;
+        } else {
+            copyButtonHTML = `<button onclick="copyToClipboard('${finalText.replace(/'/g, "\\'")}', 'text')">📋 Sao chép Văn bản</button>`;
+        }
+
+        utilityDiv.innerHTML = copyButtonHTML + 
+                               `<button id="read-btn-${messageId}" onclick="readText(this, '${finalText.replace(/'/g, "\\'")}', '${messageId}')">🔊 Đọc</button>`;
+                               
         msgElement.appendChild(utilityDiv);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
@@ -432,13 +475,28 @@
         }
     });
     
-    // --- CHỨC NĂNG TIỆN ÍCH (Giữ nguyên) ---
+    // --- CHỨC NĂNG TIỆN ÍCH (ĐÃ SỬA LỖI SAO CHÉP CODE) ---
 
     function copyToClipboard(text, type) {
         if (tts) tts.cancel();
         
         const textarea = document.createElement('textarea');
-        textarea.value = text;
+        
+        // Logic mới: Cố gắng chỉ sao chép phần code bên trong khối ```
+        let contentToCopy = text;
+        if (type === 'code' && text.includes('```')) {
+            // Sử dụng regex để tìm và trích xuất nội dung code (giữa 2 khối ```)
+            // Lưu ý: Regex này đơn giản và có thể không hoàn hảo với nhiều block code
+            const codeMatch = text.match(/```[a-zA-Z]*\n?([\s\S]*?)```/);
+            if (codeMatch && codeMatch[1]) {
+                contentToCopy = codeMatch[1].trim();
+            } else {
+                // Nếu không tìm thấy, copy toàn bộ văn bản (đã loại bỏ ``` đầu và cuối)
+                contentToCopy = text.replace(/```[a-zA-Z]*\n?/, '').replace(/\n```$/, '').trim();
+            }
+        }
+        
+        textarea.value = contentToCopy;
         document.body.appendChild(textarea);
         textarea.select();
         document.execCommand('copy');
