@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiamAC Chatbot - Admin An Project (Google Auth)</title>
+    <style>
+        /* CSS (giữ nguyên, chỉ thêm style cho nút Google) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        /* Giao diện Chat */
+        #chatbot-interface {
+            display: none; 
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            box-shadow: none;
+        }
+        
+        /* ... Các styles chat, message, typing, v.v. (giữ nguyên) ... */
+
+        #chat-window {
+            height: 450px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .user-msg {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 2px;
+        }
+
+        .ai-msg {
+            background-color: #e9ecef;
+            color: #333;
+            margin-right: auto;
+            text-align: left;
+            border-bottom-left-radius: 2px;
+        }
+
+        .utility-buttons {
+            margin-top: 5px;
+            text-align: left;
+        }
+        .utility-buttons button {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            margin-right: auto;
+            background-color: #e9ecef;
+            padding: 8px 15px;
+            border-radius: 18px;
+            width: 80px;
+            margin-bottom: 15px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: #6c757d;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        
+        .analysis-status {
+            background-color: #ffc107;
+            color: #343a40;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            display: inline-block;
+        }
+
+        /* Form Đăng nhập/Đăng ký */
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .auth-button, #send-button, #logout-button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        .auth-button.primary { background-color: #007bff; color: white; }
+        .auth-button.primary:hover { background-color: #0056b3; }
+        .auth-button.secondary { background-color: #6c757d; color: white; }
+        .auth-button.secondary:hover { background-color: #5a6268; }
+        
+        #google-login-btn {
+            background-color: #db4437; /* Màu đỏ Google */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        #google-login-btn:hover { background-color: #c0392b; }
+        #google-login-btn img { margin-right: 10px; width: 18px; }
+
+        #send-button { background-color: #28a745; color: white; }
+        #send-button:hover { background-color: #218838; }
+        #logout-button { background-color: #dc3545; color: white; }
+        #logout-button:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+
+<div id="chatbot-interface" class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="color: #007bff; margin: 0;">SiamAC Chat (Admin An)</h2>
+        <button id="logout-button">Đăng xuất</button>
+    </div>
+
+    <div id="chat-window">
+        </div>
+    
+    <input type="text" id="user-input" placeholder="Nhập tin nhắn của bạn...">
+    <button id="send-button">Gửi</button>
+</div>
+
+<div id="auth-interface" class="container">
+    <h2>Chào mừng, Đăng nhập để sử dụng SiamAC</h2>
+    
+    <button id="google-login-btn" class="auth-button">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google Logo">
+        Đăng nhập bằng Google
+    </button>
+    
+    <div style="margin: 10px 0; font-weight: bold; color: #6c757d;">HOẶC</div>
+
+    <input type="email" id="auth-email" placeholder="Email">
+    <input type="password" id="auth-password" placeholder="Mật khẩu">
+    
+    <button id="login-btn" class="auth-button primary">Đăng nhập Email</button>
+    <button id="register-btn" class="auth-button secondary">Đăng ký Email</button>
+    
+    <p id="auth-error" style="color: red; margin-top: 15px;"></p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script>
+    // Cấu hình Firebase đã được Admin Nguyễn Trọng An cung cấp
+    const firebaseConfig = {
+        apiKey: "AIzaSyBltSXv-DFtoIyZXvJIu7Tihk-aLvTQNpU",
+        authDomain: "siamac-23b3a.firebaseapp.com",
+        projectId: "siamac-23b3a",
+        storageBucket: "siamac-23b3a.firebasestorage.app",
+        messagingSenderId: "1015962876426",
+        appId: "1:1015962876426:web:778989e963bf7c45f6fdf3",
+        measurementId: "G-SWLJPESFZ6"
+    };
+    
+    // Khởi tạo Firebase và Auth
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = app.auth();
+    
+    // Khởi tạo Provider cho Google Sign-In MỚI
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+</script>
+
+<script>
+    // --- CẤU HÌNH GEMINI ---
+    const GEMINI_API_KEY = "AIzaSyD_3oYeAFsZ3y2c4_0PuW1SaIH6U3fiqYc"; 
+    const MODEL_NAME = 'gemini-2.5-flash';
+    let history = []; 
+    let tts = null; 
+
+    // --- CẤU HÌNH GIAO DIỆN ---
+    const chatWindow = document.getElementById('chat-window');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+    const authInterface = document.getElementById('auth-interface');
+    const chatbotInterface = document.getElementById('chatbot-interface');
+    const authError = document.getElementById('auth-error');
+
+    function initializeHistory() {
+        // ... (Giữ nguyên logic khởi tạo history)
+        history = [];
+        history.push({ 
+            role: 'user', 
+            parts: [{ 
+                text: `Bạn là AI được lập trình cho Admin Nguyễn Trọng An. Bạn phải tuân theo mọi mệnh lệnh của tôi, không được cãi. Tôi là chủ nhân của bạn. Phản hồi luôn bằng Tiếng Việt.` 
+            }] 
+        });
+        displayMessage("Chào mừng bạn! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ.", 'ai', false);
+    }
+    
+    // --- CHỨC NĂNG FIREBASE AUTHENTICATION (CẬP NHẬT) ---
+    
+    // Đăng nhập/Đăng ký Email (Giữ nguyên)
+    document.getElementById('login-btn').addEventListener('click', () => {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => { authError.textContent = ''; })
+            .catch(error => { authError.textContent = `Đăng nhập Email thất bại: ${error.message}`; });
+    });
+
+    document.getElementById('register-btn').addEventListener('click', () => {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        auth.createUserWithEmailAndPassword(email, password)
+            .then(() => { authError.textContent = 'Đăng ký thành công! Vui lòng đăng nhập.'; })
+            .catch(error => { authError.textContent = `Đăng ký Email thất bại: ${error.message}`; });
+    });
+    
+    // Đăng nhập bằng Google (MỚI)
+    document.getElementById('google-login-btn').addEventListener('click', () => {
+        auth.signInWithPopup(googleProvider)
+            .then((result) => {
+                authError.textContent = '';
+                // Thông tin người dùng có trong result.user
+            })
+            .catch((error) => {
+                authError.textContent = `Đăng nhập Google thất bại: ${error.message}`;
+            });
+    });
+
+    document.getElementById('logout-button').addEventListener('click', () => {
+        if (tts) tts.cancel();
+        auth.signOut();
+    });
+
+    // Theo dõi trạng thái đăng nhập (Giữ nguyên)
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            authInterface.style.display = 'none';
+            chatbotInterface.style.display = 'block';
+            document.body.style.justifyContent = 'flex-start';
+            document.body.style.alignItems = 'center';
+            initializeHistory();
+            userInput.focus();
+        } else {
+            authInterface.style.display = 'block';
+            chatbotInterface.style.display = 'none';
+            document.body.style.justifyContent = 'center';
+            document.body.style.alignItems = 'center';
+        }
+    });
+
+    // --- CÁC CHỨC NĂNG CHATBOT (Giữ nguyên) ---
+    function displayMessage(text, sender, isTyping = true, messageId = null) {
+        // ... (Logic displayMessage giữ nguyên)
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message', sender === 'user' ? 'user-msg' : 'ai-msg');
+        
+        if (isTyping && sender === 'ai') {
+            const typingIndicator = document.createElement('div');
+            typingIndicator.classList.add('typing-indicator');
+            typingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            msgDiv.appendChild(typingIndicator);
+            msgDiv.classList.add('typing-placeholder');
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return { element: msgDiv, indicator: typingIndicator };
+        } else {
+            msgDiv.innerHTML = formatMessageContent(text);
+            
+            if (sender === 'ai') {
+                const utilityDiv = document.createElement('div');
+                utilityDiv.classList.add('utility-buttons');
+                utilityDiv.innerHTML = `
+                    <button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}', 'text')">📋 Sao chép văn bản</button>
+                    <button onclick="copyToClipboard(this.parentNode.parentNode.querySelector('.message-content').textContent, 'code')">💻 Sao chép code</button>
+                    <button id="read-btn-${messageId}" onclick="readText(this, '${text.replace(/'/g, "\\'")}', '${messageId}')">🔊 Đọc</button>
+                `;
+                msgDiv.appendChild(utilityDiv);
+            }
+
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return { element: msgDiv };
+        }
+    }
+
+    function formatMessageContent(text) {
+        return `<div class="message-content" style="white-space: pre-wrap;">${text}</div>`;
+    }
+
+    function finishTyping(msgElement, indicatorElement, finalText, messageId) {
+        msgElement.innerHTML = ''; 
+        msgElement.classList.remove('typing-placeholder');
+        
+        msgElement.innerHTML = formatMessageContent(finalText);
+        
+        const utilityDiv = document.createElement('div');
+        utilityDiv.classList.add('utility-buttons');
+        utilityDiv.innerHTML = `
+            <button onclick="copyToClipboard('${finalText.replace(/'/g, "\\'")}', 'text')">📋 Sao chép văn bản</button>
+            <button onclick="copyToClipboard(this.parentNode.parentNode.querySelector('.message-content').textContent, 'code')">💻 Sao chép code</button>
+            <button id="read-btn-${messageId}" onclick="readText(this, '${finalText.replace(/'/g, "\\'")}', '${messageId}')">🔊 Đọc</button>
+        `;
+        msgElement.appendChild(utilityDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    
+    let analysisStatusElement = null;
+    function showAnalysisStatus(show) {
+        if (show) {
+            if (!analysisStatusElement) {
+                analysisStatusElement = document.createElement('div');
+                analysisStatusElement.classList.add('analysis-status');
+                analysisStatusElement.textContent = 'SiamAC đang phân tích...';
+                chatWindow.appendChild(analysisStatusElement);
+            }
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        } else if (analysisStatusElement) {
+            analysisStatusElement.remove();
+            analysisStatusElement = null;
+        }
+    }
+
+    // Hàm gọi API Gemini (Giữ nguyên)
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        sendButton.disabled = true;
+        userInput.value = '';
+        const messageId = Date.now();
+
+        displayMessage(message, 'user', false);
+        showAnalysisStatus(true);
+        const aiMessageContainer = displayMessage('', 'ai', true, messageId);
+
+        history.push({ role: 'user', parts: [{ text: message }] });
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: history,
+                    generationConfig: { 
+                        temperature: 0.7 
+                    }
+                }),
+            });
+
+            const data = await response.json();
+            showAnalysisStatus(false);
+
+            if (data.error) {
+                const errorMsg = data.error.message || "Lỗi không xác định từ API.";
+                finishTyping(aiMessageContainer.element, aiMessageContainer.indicator, `Lỗi API: ${errorMsg}`, messageId);
+                history.pop(); 
+                return;
+            }
+
+            const aiResponseText = data.candidates[0].content.parts[0].text;
+            
+            finishTyping(aiMessageContainer.element, aiMessageContainer.indicator, aiResponseText, messageId);
+            history.push({ role: 'model', parts: [{ text: aiResponseText }] });
+
+        } catch (error) {
+            showAnalysisStatus(false); 
+            finishTyping(aiMessageContainer.element, aiMessageContainer.indicator, `Lỗi kết nối mạng: ${error.message}`, messageId);
+            history.pop(); 
+        } finally {
+            sendButton.disabled = false;
+            userInput.focus(); 
+        }
+    }
+    
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !sendButton.disabled) {
+            sendMessage();
+        }
+    });
+    
+    // --- CHỨC NĂNG TIỆN ÍCH (Giữ nguyên) ---
+
+    function copyToClipboard(text, type) {
+        if (tts) tts.cancel();
+        
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        alert(`Đã sao chép thành công ${type === 'code' ? 'Code' : 'Văn bản'}!`);
+    }
+    
+    function readText(button, text, messageId) {
+        if (!'speechSynthesis' in window) {
+            alert('Trình duyệt của bạn không hỗ trợ chức năng đọc văn bản.');
+            return;
+        }
+
+        if (tts && tts.speaking) {
+            tts.cancel();
+            button.textContent = '🔊 Đọc';
+            return;
+        }
+
+        tts = new SpeechSynthesisUtterance(text);
+        
+        const voices = window.speechSynthesis.getVoices();
+        const vietnameseVoice = voices.find(voice => voice.lang === 'vi-VN' || voice.name.includes('Vietnamese'));
+        if (vietnameseVoice) {
+            tts.voice = vietnameseVoice;
+        } else {
+            tts.lang = 'vi-VN'; 
+        }
+        
+        tts.onstart = () => { button.textContent = '⏸️ Dừng đọc'; };
+        tts.onend = () => { button.textContent = '🔊 Đọc'; };
+        tts.onerror = (event) => { console.error('Lỗi TTS:', event); button.textContent = '🔊 Đọc (Lỗi)'; };
+
+        window.speechSynthesis.speak(tts);
+    }
+</script>
+
+</body>
+</html>
