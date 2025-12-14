@@ -43,6 +43,7 @@
             justify-content: space-between;
             height: 90vh;
             min-height: 500px;
+            position: relative; /* Thêm position relative cho container */
         }
         
         #header-title {
@@ -50,6 +51,26 @@
             margin: 0 0 15px 0;
             text-align: center;
             font-size: 1.8em;
+        }
+
+        /* --- NÚT RESET KEY LUÔN HIỂN THỊ (MỚI) --- */
+        #reset-key-btn-floating {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background-color: #dc3545; /* Đỏ */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, opacity 0.3s;
+            font-size: 0.9em;
+            z-index: 1000;
+        }
+        #reset-key-btn-floating:hover {
+            background-color: #c82333;
         }
 
         /* --- API KEY SETUP --- */
@@ -81,9 +102,6 @@
         #paste-key-btn:hover { background-color: #5a6268; }
         #confirm-key-btn { background-color: #28a745; color: white; }
         #confirm-key-btn:hover { background-color: #218838; }
-        /* Style cho nút Xóa Key */
-        #reset-key-btn { background-color: #dc3545; color: white; }
-        #reset-key-btn:hover { background-color: #c82333; }
 
         /* --- CHAT WINDOW --- */
         #chat-window {
@@ -307,7 +325,7 @@
 <body>
 
 <div id="chatbot-interface" class="container">
-    <div style="margin-bottom: 15px;">
+    <button id="reset-key-btn-floating" style="display: none;"><i class="fas fa-trash-alt"></i> Xóa Key API</button> <div style="margin-bottom: 15px;">
         <h2 id="header-title">SiamAC Chat (Admin An Project)</h2>
     </div>
 
@@ -315,7 +333,6 @@
         <input type="password" id="api-key-input" placeholder="Dán Gemini API Key của bạn (AIzaSy...)">
         <button id="paste-key-btn" class="api-btn"><i class="fas fa-paste"></i> Dán Key</button>
         <button id="confirm-key-btn" class="api-btn"><i class="fas fa-check"></i> Xác nhận</button>
-        <button id="reset-key-btn" class="api-btn" style="background-color: #dc3545;"><i class="fas fa-trash-alt"></i> Xóa Key</button>
     </div>
     
     <div id="chat-window">
@@ -358,8 +375,8 @@
     const apiKeyInput = document.getElementById('api-key-input');
     const confirmKeyBtn = document.getElementById('confirm-key-btn');
     const pasteKeyBtn = document.getElementById('paste-key-btn');
-    const resetKeyBtn = document.getElementById('reset-key-btn'); // ĐÃ THÊM
-
+    const resetKeyBtnFloating = document.getElementById('reset-key-btn-floating'); // NÚT MỚI
+    
     // Biến Modal Code
     const codeModal = document.getElementById('codeModal');
     const closeModalBtn = document.querySelector('.close-modal-btn');
@@ -392,11 +409,13 @@
         if (GEMINI_API_KEY) {
             apiKeySetup.style.display = 'none';
             inputArea.style.display = 'flex';
+            resetKeyBtnFloating.style.display = 'block'; // HIỆN NÚT XÓA KEY
             userInput.focus();
             initializeHistory();
         } else {
             apiKeySetup.style.display = 'flex';
             inputArea.style.display = 'none';
+            resetKeyBtnFloating.style.display = 'none'; // ẨN NÚT XÓA KEY
             apiKeyInput.focus();
         }
     }
@@ -408,6 +427,7 @@
             localStorage.setItem('GEMINI_API_KEY', key);
             GEMINI_API_KEY = key;
             checkApiKey();
+            // Không cần gọi initializeHistory ở đây vì nó đã được gọi trong checkApiKey()
             displayMessage(`Cảm ơn! API Key đã được xác nhận. Mời Admin bắt đầu trò chuyện.`, 'ai', false);
         } else {
             alert('API Key không hợp lệ. Vui lòng kiểm tra lại!');
@@ -427,7 +447,7 @@
     });
     
     // --- CHỨC NĂNG XÓA/ĐỔI KEY API (MỚI) ---
-    resetKeyBtn.addEventListener('click', () => {
+    resetKeyBtnFloating.addEventListener('click', () => {
         if (confirm('Bạn có chắc chắn muốn xóa Key API đã lưu không? Hành động này sẽ cho phép bạn nhập Key mới.')) {
             localStorage.removeItem('GEMINI_API_KEY');
             GEMINI_API_KEY = null;
