@@ -4,17 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SiamAC Chatbot - Admin An Project (Stateless)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* CSS (ĐÃ TỐI ƯU GIAO DIỆN CHAT ĐỘC LẬP) */
+        /* --- CSS TỔNG HỢP (ĐÃ THÊM INTRO & HIỆU ỨNG) --- */
+        :root {
+            --primary-color: #007bff; /* Xanh dương */
+            --ai-color: #34495e; /* Xanh đậm cho AI */
+            --bg-color: #e9ecef;
+            --code-bg: #272822;
+            --typing-bg: #f0f0f0;
+            --intro-duration: 0.8s;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #e9ecef;
+            background-color: var(--bg-color);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            transition: all 0.3s ease;
+            transition: opacity var(--intro-duration) ease-in-out;
+            opacity: 0; /* Ban đầu ẩn để tạo hiệu ứng Intro */
+        }
+        body.loaded {
+            opacity: 1;
         }
 
         .container {
@@ -22,14 +36,53 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             width: 100%;
-            max-width: 600px; /* Đặt lại max-width cho giao diện độc lập */
+            max-width: 750px; /* Tăng kích thước khung chat */
             padding: 20px;
-            display: flex; /* Đảm bảo giao diện chat chiếm toàn bộ không gian */
+            display: flex;
             flex-direction: column;
             justify-content: space-between;
             height: 90vh;
+            min-height: 500px;
         }
         
+        #header-title {
+            color: var(--primary-color);
+            margin: 0 0 15px 0;
+            text-align: center;
+            font-size: 1.8em;
+        }
+
+        /* --- API KEY SETUP --- */
+        #api-key-setup {
+            padding: 15px;
+            border: 1px dashed #ffc107;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background-color: #fffbe6;
+            display: flex;
+            gap: 10px;
+        }
+        #api-key-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .api-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #paste-key-btn { background-color: #6c757d; color: white; }
+        #paste-key-btn:hover { background-color: #5a6268; }
+        #confirm-key-btn { background-color: #28a745; color: white; }
+        #confirm-key-btn:hover { background-color: #218838; }
+
+        /* --- CHAT WINDOW --- */
         #chat-window {
             height: 100%;
             overflow-y: auto;
@@ -42,7 +95,62 @@
             flex-grow: 1;
         }
         
-        /* Khung nhập liệu */
+        /* --- MESSAGE & ANIMATIONS --- */
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 85%;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.3s ease-out; /* Hiệu ứng Intro tin nhắn */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-msg {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 2px;
+            animation: bounceInUser 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Nảy nhẹ */
+        }
+        .ai-msg {
+            background-color: var(--typing-bg);
+            color: var(--ai-color);
+            margin-right: auto;
+            text-align: left;
+            border-bottom-left-radius: 2px;
+            padding: 0; 
+            animation: bounceInAI 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Nảy nhẹ */
+        }
+        @keyframes bounceInUser {
+            0% { opacity: 0; transform: translateX(20px) scale(0.9); }
+            100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes bounceInAI {
+            0% { opacity: 0; transform: translateX(-20px) scale(0.9); }
+            100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        /* Hiệu ứng gõ chữ (typing effect) */
+        .typing-effect {
+            display: inline-block;
+            overflow: hidden; 
+            white-space: pre-wrap;
+            border-right: 3px solid var(--ai-color); /* Con trỏ nhấp nháy */
+            animation: blink-cursor 0.75s step-end infinite;
+            padding: 15px;
+        }
+        @keyframes blink-cursor {
+            from, to { border-right-color: transparent }
+            50% { border-right-color: var(--ai-color); }
+        }
+
+        /* --- INPUT AREA --- */
         #input-area {
             display: flex;
             gap: 10px;
@@ -58,7 +166,7 @@
         }
         #send-button {
             width: 100px;
-            background-color: #28a745; 
+            background-color: var(--primary-color); 
             color: white;
             border: none;
             border-radius: 8px;
@@ -66,44 +174,19 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        #send-button:hover { background-color: #218838; }
+        #send-button:hover:not(:disabled) { background-color: #0056b3; }
+        #send-button:disabled { background-color: #a4c9e4; cursor: not-allowed; }
 
-        /* Message */
-        .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 80%;
-            line-height: 1.5;
-            position: relative;
-        }
-
-        .user-msg {
-            background-color: #007bff;
-            color: white;
-            margin-left: auto;
-            text-align: right;
-            border-bottom-right-radius: 2px;
-        }
-
-        .ai-msg {
-            background-color: #e9ecef;
-            color: #333;
-            margin-right: auto;
-            text-align: left;
-            border-bottom-left-radius: 2px;
-            padding: 0; 
-        }
-
-        /* CODE BLOCK */
+        /* --- CODE BLOCK STYLES --- */
         .code-block {
-            background-color: #272822; 
+            background-color: var(--code-bg); 
             color: #f8f8f2; 
             padding: 0;
-            border-radius: 10px;
+            border-radius: 8px;
             margin-top: 10px;
             overflow: hidden;
             position: relative;
+            cursor: pointer; /* Cho biết có thể nhấn vào */
         }
         .code-block pre {
             margin: 0;
@@ -117,61 +200,105 @@
             justify-content: space-between;
             align-items: center;
             background-color: #3e4038;
-            padding: 5px 15px;
-            font-size: 0.8em;
+            padding: 8px 15px;
+            font-size: 0.85em;
             color: #ddd;
         }
-        .copy-code-btn {
-            background-color: #007bff;
-            color: white;
+        .code-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .code-actions button {
+            background: none;
             border: none;
-            padding: 5px 10px;
+            color: white;
+            padding: 5px 8px;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            font-weight: 600;
         }
-        .copy-code-btn:hover { background-color: #0056b3; }
-
-        /* Utility */
-        .utility-buttons {
-            margin-top: 5px;
-            text-align: left;
+        .code-actions .copy-code-btn { background-color: var(--primary-color); }
+        .code-actions .copy-code-btn:hover { background-color: #0056b3; }
+        .code-actions .run-code-btn { background-color: #ffc107; color: var(--ai-color); }
+        .code-actions .run-code-btn:hover { background-color: #e0a800; }
+        
+        /* Thay thế nút Đọc bằng nút Xem Code Lớn */
+        .view-code-btn-container {
+            text-align: right;
             padding: 0 15px 10px 15px;
         }
-        .utility-buttons button {
-            background: none;
+        .view-code-btn {
+            background-color: #6f42c1;
+            color: white;
             border: none;
-            color: #6c757d;
+            padding: 8px 15px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 0.9em;
-            margin-right: 10px;
+            transition: background-color 0.3s;
         }
+        .view-code-btn:hover { background-color: #5a32a3; }
+
+
+        /* --- MODAL CSS (Mới) --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close-modal-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .close-modal-btn:hover {
+            color: #333;
+        }
+        #modal-code-area {
+            background-color: var(--code-bg);
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        #modal-code-area pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
         
-        /* Typing, Analysis */
-        .typing-indicator {
-            display: flex; align-items: center; margin-right: auto; background-color: #e9ecef;
-            padding: 8px 15px; border-radius: 18px; width: 80px; margin-bottom: 15px;
-        }
-        .dot {
-            width: 8px; height: 8px; margin: 0 2px; background-color: #6c757d;
-            border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both;
-        }
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
+        /* Status */
         .analysis-status {
             background-color: #ffc107; color: #343a40; padding: 5px 10px; border-radius: 5px;
             margin-bottom: 10px; font-size: 0.9em; display: inline-block;
         }
-        #header-title {
-            color: #007bff; 
-            margin: 0; 
-            text-align: center;
-        }
-
+        
     </style>
 </head>
 <body>
@@ -181,29 +308,60 @@
         <h2 id="header-title">SiamAC Chat (Admin An Project)</h2>
     </div>
 
-    <div id="chat-window">
+    <div id="api-key-setup">
+        <input type="password" id="api-key-input" placeholder="Dán Gemini API Key của bạn (AIzaSy...)">
+        <button id="paste-key-btn" class="api-btn"><i class="fas fa-paste"></i> Dán Key</button>
+        <button id="confirm-key-btn" class="api-btn"><i class="fas fa-check"></i> Xác nhận</button>
     </div>
     
-    <div id="input-area">
+    <div id="chat-window">
+        </div>
+    
+    <div id="input-area" style="display: none;">
         <input type="text" id="user-input" placeholder="Nhập tin nhắn của bạn...">
-        <button id="send-button">Gửi</button>
+        <button id="send-button"><i class="fas fa-paper-plane"></i> Gửi</button>
+    </div>
+</div>
+
+<div id="codeModal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal-btn">&times;</span>
+        <h3 id="modal-code-title" style="color: var(--primary-color);">Xem Code Lớn</h3>
+        <div id="modal-code-area">
+            </div>
+        <div style="text-align: right; margin-top: 15px;">
+            <button id="modal-copy-btn" class="api-btn" style="background-color: var(--primary-color); color: white;"><i class="fas fa-copy"></i> Sao chép</button>
+            <button id="modal-run-btn" class="api-btn" style="background-color: #ffc107; color: var(--ai-color);"><i class="fas fa-play"></i> Run Code (Giả lập)</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- CẤU HÌNH GEMINI ---
-    const GEMINI_API_KEY = "AIzaSyD_3oYeAFsZ3y2c4_0PuW1SaIH6U3fiqYc"; 
+    // --- CẤU HÌNH BAN ĐẦU ---
+    let GEMINI_API_KEY = localStorage.getItem('GEMINI_API_KEY'); 
     const MODEL_NAME = 'gemini-2.5-flash';
     let history = []; 
-    let tts = null; // Khai báo biến tts toàn cục
-    let currentSpeakingButton = null; // Theo dõi nút đang nói
+    let isTyping = false; 
 
-    // --- CẤU HÌNH GIAO DIỆN ---
+    // --- BIẾN GIAO DIỆN ---
     const chatWindow = document.getElementById('chat-window');
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-button');
+    const inputArea = document.getElementById('input-area');
+    const apiKeySetup = document.getElementById('api-key-setup');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const confirmKeyBtn = document.getElementById('confirm-key-btn');
+    const pasteKeyBtn = document.getElementById('paste-key-btn');
+    
+    // Biến Modal Code
+    const codeModal = document.getElementById('codeModal');
+    const closeModalBtn = document.querySelector('.close-modal-btn');
+    const modalCodeArea = document.getElementById('modal-code-area');
+    const modalCopyBtn = document.getElementById('modal-copy-btn');
+    const modalRunBtn = document.getElementById('modal-run-btn');
+    let currentModalCode = ''; // Lưu code đang hiển thị trong Modal
 
-    // Hàm System Prompt (giữ nguyên)
+    // --- KHỞI TẠO HỆ THỐNG ---
     function initializeHistory() {
         history = [];
         history.push({ 
@@ -228,43 +386,133 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
             }] 
         });
         
-        displayMessage("Chào mừng! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ Admin.", 'ai', false);
+        displayMessage(`Chào mừng! Tôi là SiamAC, AI Chatbot sẵn sàng phục vụ Admin. Vui lòng **Xác nhận API Key** để bắt đầu.`, 'ai', false);
     }
     
-    // Tự động khởi tạo khi tải trang
-    initializeHistory();
-
-
-    // --- CÁC CHỨC NĂNG CHATBOT (ĐÃ SỬA LỖI TTS) ---
-    
-    function displayMessage(text, sender, isTyping = true, messageId = null) {
-        const msgDiv = document.createElement('div');
-        msgDiv.classList.add('message', sender === 'user' ? 'user-msg' : 'ai-msg');
-        
-        if (isTyping && sender === 'ai') {
-            const typingIndicator = document.createElement('div');
-            typingIndicator.classList.add('typing-indicator');
-            typingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-            msgDiv.appendChild(typingIndicator);
-            msgDiv.classList.add('typing-placeholder');
-            chatWindow.appendChild(msgDiv);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            return { element: msgDiv, indicator: typingIndicator };
+    function checkApiKey() {
+        if (GEMINI_API_KEY) {
+            apiKeySetup.style.display = 'none';
+            inputArea.style.display = 'flex';
+            userInput.focus();
+            initializeHistory();
         } else {
-            if (sender === 'ai') {
-                // messageId chỉ cần thiết cho TTS
-                msgDiv.innerHTML = parseAndFormatAiResponse(text, messageId || Date.now()); 
-            } else {
-                msgDiv.innerHTML = `<div class="message-content" style="white-space: pre-wrap;">${text}</div>`;
-            }
-
-            chatWindow.appendChild(msgDiv);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            return { element: msgDiv };
+            apiKeySetup.style.display = 'flex';
+            inputArea.style.display = 'none';
+            apiKeyInput.focus();
         }
     }
     
-    // Tách code và văn bản (Giữ nguyên logic Code Block)
+    // --- CHỨC NĂNG API KEY ---
+    confirmKeyBtn.addEventListener('click', () => {
+        const key = apiKeyInput.value.trim();
+        if (key && key.startsWith('AIzaSy')) {
+            localStorage.setItem('GEMINI_API_KEY', key);
+            GEMINI_API_KEY = key;
+            checkApiKey();
+            displayMessage(`Cảm ơn! API Key đã được xác nhận. Mời Admin bắt đầu trò chuyện.`, 'ai', false);
+        } else {
+            alert('API Key không hợp lệ. Vui lòng kiểm tra lại!');
+            apiKeyInput.focus();
+        }
+    });
+
+    pasteKeyBtn.addEventListener('click', async () => {
+        try {
+            const clipboardText = await navigator.clipboard.readText();
+            if (clipboardText) {
+                apiKeyInput.value = clipboardText.trim();
+            }
+        } catch (err) {
+            alert('Không thể dán từ clipboard. Vui lòng dán thủ công.');
+        }
+    });
+
+    // --- HIỂN THỊ TIN NHẮN VÀ TYPING EFFECT ---
+    
+    function displayMessage(text, sender, startTyping = false, messageId = null) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message', sender === 'user' ? 'user-msg' : 'ai-msg');
+        
+        if (sender === 'user') {
+            msgDiv.innerHTML = `<div class="message-content" style="white-space: pre-wrap;">${text}</div>`;
+            chatWindow.appendChild(msgDiv);
+        } else {
+            // AI message setup for typing effect
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+            msgDiv.appendChild(contentDiv);
+            chatWindow.appendChild(msgDiv);
+
+            if (startTyping) {
+                // Sử dụng setTimeout để đảm bảo messageDiv đã được thêm vào DOM
+                setTimeout(() => {
+                    simulateTyping(contentDiv, text, messageId, msgDiv);
+                }, 10);
+            } else {
+                 // Nếu không có typing effect (tin nhắn khởi tạo)
+                 contentDiv.innerHTML = parseAndFormatAiResponse(text, messageId);
+                 msgDiv.style.padding = '0'; // Loại bỏ padding vì parseAndFormatAiResponse đã thêm padding cho text
+            }
+        }
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        return { element: msgDiv };
+    }
+
+    // Hiệu ứng gõ chữ mượt mà
+    function simulateTyping(contentDiv, fullText, messageId, msgElement) {
+        let index = 0;
+        let htmlContent = '';
+        const codeBlockRegex = /```([a-zA-Z]+)?\n([\s\S]*?)```/g;
+        const strippedText = fullText.replace(/<button.*?>.*?<\/button>/g, '').trim();
+
+        // Xóa con trỏ cũ nếu có
+        const existingTypingEffect = contentDiv.querySelector('.typing-effect');
+        if (existingTypingEffect) {
+            existingTypingEffect.classList.remove('typing-effect');
+        }
+
+        const typingDiv = document.createElement('div');
+        typingDiv.classList.add('typing-effect');
+        typingDiv.style.padding = '15px'; // Thêm padding cho typing effect
+        contentDiv.appendChild(typingDiv);
+        
+        isTyping = true;
+        
+        const interval = setInterval(() => {
+            if (index < strippedText.length) {
+                // Kiểm tra nếu gặp đoạn code, hiển thị nhanh code block
+                if (strippedText.substring(index).startsWith('```')) {
+                    const match = codeBlockRegex.exec(strippedText.substring(index));
+                    if (match) {
+                        const codeBlockLength = match[0].length;
+                        htmlContent += strippedText.substring(index, index + codeBlockLength);
+                        index += codeBlockLength;
+                        typingDiv.innerHTML = parseAndFormatAiResponse(htmlContent, messageId);
+                        chatWindow.scrollTop = chatWindow.scrollHeight;
+                        codeBlockRegex.lastIndex = 0; // Reset index cho vòng lặp tiếp theo
+                        return;
+                    }
+                }
+                
+                // Hiển thị từng ký tự
+                htmlContent += strippedText[index];
+                typingDiv.textContent = htmlContent;
+                index++;
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            } else {
+                clearInterval(interval);
+                isTyping = false;
+                typingDiv.classList.remove('typing-effect');
+                
+                // Kết thúc gõ, định dạng lại toàn bộ nội dung
+                msgElement.style.padding = '0';
+                contentDiv.innerHTML = parseAndFormatAiResponse(strippedText, messageId);
+            }
+        }, 15); // Tốc độ gõ chữ (15ms)
+    }
+
+    // Tách code và văn bản (Đã sửa đổi cho Modal và Run Code)
     function parseAndFormatAiResponse(fullText, messageId) {
         const codeBlockRegex = /```([a-zA-Z]+)?\n([\s\S]*?)```/g;
         let htmlContent = '';
@@ -282,15 +530,21 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
             const language = match[1] || 'Code';
             const codeContent = match[2];
             
+            // Code Block với nút Xem Code Lớn
             htmlContent += `
-                <div class="code-block">
+                <div class="code-block" onclick="openCodeModal(this, \`${codeContent.replace(/`/g, '\\`')}\`, '${language}')">
                     <div class="code-block-header">
                         <span>${language}</span>
-                        <button class="copy-code-btn" onclick="copyCodeBlock(this, \`${codeContent.replace(/`/g, '\\`')}\`)">
-                            📋 Sao chép
-                        </button>
+                        <div class="code-actions">
+                            <button class="run-code-btn" onclick="runCode(event, \`${codeContent.replace(/`/g, '\\`')}\`)">
+                                <i class="fas fa-play"></i> Run
+                            </button>
+                            <button class="copy-code-btn" onclick="copyCodeBlock(event, \`${codeContent.replace(/`/g, '\\`')}\`)">
+                                <i class="fas fa-copy"></i> Sao chép
+                            </button>
+                        </div>
                     </div>
-                    <pre><code>${codeContent}</code></pre>
+                    <pre><code>${codeContent.substring(0, 150)}...</code></pre>
                 </div>
             `;
             lastIndex = match.index + match[0].length;
@@ -300,27 +554,13 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
         if (textAfter) {
              htmlContent += `<div class="message-content" style="white-space: pre-wrap; padding: 15px;">${textAfter}</div>`;
         }
-
-        // Thêm nút Đọc
-        htmlContent += `
-            <div class="utility-buttons">
-                <button id="read-btn-${messageId}" onclick="readText(this, \`${strippedText.replace(/`/g, '\\`')}\`, '${messageId}')">🔊 Đọc</button>
-            </div>
-        `;
         
         return htmlContent;
     }
 
 
-    function finishTyping(msgElement, indicatorElement, finalText, messageId) {
-        msgElement.innerHTML = parseAndFormatAiResponse(finalText, messageId);
-        msgElement.classList.remove('typing-placeholder');
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-    
     let analysisStatusElement = null;
     function showAnalysisStatus(show) {
-        // (Logic showAnalysisStatus giữ nguyên)
         if (show) {
             if (!analysisStatusElement) {
                 analysisStatusElement = document.createElement('div');
@@ -335,27 +575,28 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
         }
     }
 
+    // --- CHỨC NĂNG GỬI TIN NHẮN ---
+
     async function sendMessage() {
-        if (tts && tts.speaking) {
-            window.speechSynthesis.cancel();
-            // Nếu đang đọc, dừng lại và reset nút
-            if (currentSpeakingButton) {
-                currentSpeakingButton.textContent = '🔊 Đọc';
-                currentSpeakingButton = null;
-            }
-        }
-        
+        if (isTyping) return;
+
         const message = userInput.value.trim();
         if (!message) return;
+        if (!GEMINI_API_KEY) {
+             displayMessage('Vui lòng nhập và Xác nhận API Key trước khi trò chuyện.', 'ai', false);
+             return;
+        }
 
         sendButton.disabled = true;
+        isTyping = true;
         userInput.value = '';
         const messageId = Date.now();
 
         displayMessage(message, 'user', false);
 
         showAnalysisStatus(true);
-        const aiMessageContainer = displayMessage('', 'ai', true, messageId);
+        // Không dùng typing placeholder nữa, thay bằng typing effect
+        const aiMessageContainer = displayMessage('', 'ai', false, messageId); 
 
         history.push({ role: 'user', parts: [{ text: message }] });
 
@@ -378,23 +619,26 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
 
             if (data.error) {
                 const errorMsg = data.error.message || "Lỗi không xác định từ API.";
-                finishTyping(aiMessageContainer.element, aiMessageContainer.indicator, `Lỗi API: ${errorMsg}`, messageId);
+                displayMessage(`Lỗi API: ${errorMsg}`, 'ai', false);
                 history.pop(); 
                 return;
             }
-
+            
             const aiResponseText = data.candidates[0].content.parts[0].text;
             
-            finishTyping(aiMessageContainer.element, aiMessageContainer.indicator, aiResponseText, messageId);
+            // Bắt đầu hiệu ứng gõ chữ
+            simulateTyping(aiMessageContainer.element.querySelector('.message-content'), aiResponseText, messageId, aiMessageContainer.element);
+            
             history.push({ role: 'model', parts: [{ text: aiResponseText }] });
 
         } catch (error) {
             showAnalysisStatus(false); 
-            finishTyping(aiMessageContainer.element, aiMessageContainer.indicator, `Lỗi kết nối mạng: ${error.message}`, messageId);
+            displayMessage(`Lỗi kết nối mạng: ${error.message}`, 'ai', false);
             history.pop(); 
         } finally {
             sendButton.disabled = false;
             userInput.focus(); 
+            isTyping = false;
         }
     }
     
@@ -407,8 +651,10 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
     
     // --- CHỨC NĂNG TIỆN ÍCH ---
 
-    function copyCodeBlock(button, codeText) {
-        if (tts && tts.speaking) window.speechSynthesis.cancel();
+    // Chức năng sao chép code
+    function copyCodeBlock(e, codeText) {
+        e.stopPropagation(); // Ngăn sự kiện mở modal
+        const button = e.currentTarget;
         
         const textarea = document.createElement('textarea');
         textarea.value = codeText;
@@ -419,72 +665,63 @@ Bạn là SiamAC, một Chatbot thông minh và lịch sự, được tạo ra �
         
         button.textContent = '✅ Đã sao chép!';
         setTimeout(() => {
-            button.textContent = '📋 Sao chép';
+            button.innerHTML = '<i class="fas fa-copy"></i> Sao chép';
         }, 2000);
     }
     
-    // HÀM SỬA LỖI ĐỌC/DỪNG ĐỌC (QUAN TRỌNG)
-    function readText(button, text, messageId) {
-        if (!'speechSynthesis' in window) {
-            alert('Trình duyệt của bạn không hỗ trợ chức năng đọc văn bản.');
-            return;
-        }
-
-        // 1. Nếu đang có giọng nói và giọng nói đó là của nút hiện tại: Dừng lại.
-        if (tts && tts.speaking && currentSpeakingButton === button) {
-            window.speechSynthesis.cancel();
-            currentSpeakingButton = null;
-            return;
-        } 
-        
-        // 2. Nếu đang có giọng nói khác: Dừng giọng nói cũ và reset nút cũ.
-        if (tts && tts.speaking) {
-             window.speechSynthesis.cancel();
-             if (currentSpeakingButton) {
-                currentSpeakingButton.textContent = '🔊 Đọc';
-             }
-        }
-        
-        // 3. Chuẩn bị giọng nói mới
-        tts = new SpeechSynthesisUtterance(text);
-        
-        const voices = window.speechSynthesis.getVoices();
-        const vietnameseVoice = voices.find(voice => voice.lang === 'vi-VN' || voice.name.includes('Vietnamese'));
-        if (vietnameseVoice) {
-            tts.voice = vietnameseVoice;
-        } else {
-            tts.lang = 'vi-VN'; 
-        }
-        
-        // 4. Cập nhật trạng thái
-        currentSpeakingButton = button;
-        
-        tts.onstart = () => { 
-            currentSpeakingButton.textContent = '⏸️ Dừng đọc'; 
-        };
-        tts.onend = () => { 
-            currentSpeakingButton.textContent = '🔊 Đọc'; 
-            currentSpeakingButton = null; // Hoàn thành, reset trạng thái
-        };
-        tts.onerror = (event) => { 
-            console.error('Lỗi TTS:', event); 
-            button.textContent = '🔊 Đọc (Lỗi)'; 
-            currentSpeakingButton = null; // Lỗi, reset trạng thái
-        };
-
-        window.speechSynthesis.speak(tts);
+    // Chức năng Run Code (Giả lập)
+    function runCode(e, codeText) {
+        e.stopPropagation(); // Ngăn sự kiện mở modal
+        alert("Chức năng Run Code đang được phát triển, thưa Admin! Nội dung code:\n\n" + codeText.substring(0, 100) + "...");
     }
 
-    // Load lại voices sau khi DOM đã sẵn sàng
-    window.onload = function() {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.getVoices();
-            // Lấy lại voices khi cần (đôi khi trình duyệt cần thời gian để tải)
-            window.speechSynthesis.onvoiceschanged = () => {
-                window.speechSynthesis.getVoices();
-            };
+    // Chức năng mở Modal Code
+    function openCodeModal(element, codeText, language) {
+        currentModalCode = codeText;
+        document.getElementById('modal-code-title').textContent = `Code ${language}`;
+        modalCodeArea.innerHTML = `<pre><code>${codeText}</code></pre>`;
+        codeModal.style.display = 'flex';
+    }
+
+    // Chức năng Modal Copy
+    modalCopyBtn.onclick = function() {
+        const textarea = document.createElement('textarea');
+        textarea.value = currentModalCode;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        modalCopyBtn.textContent = '✅ Đã sao chép!';
+        setTimeout(() => {
+            modalCopyBtn.innerHTML = '<i class="fas fa-copy"></i> Sao chép';
+        }, 2000);
+    }
+
+    // Chức năng Modal Run
+    modalRunBtn.onclick = function() {
+        alert("Chức năng Run Code đang được phát triển, thưa Admin! Nội dung code:\n\n" + currentModalCode.substring(0, 100) + "...");
+    }
+
+    // Đóng Modal
+    closeModalBtn.onclick = function() {
+        codeModal.style.display = 'none';
+    }
+    window.onclick = function(event) {
+        if (event.target == codeModal) {
+            codeModal.style.display = 'none';
         }
-    };
+    }
+
+    // --- HIỆU ỨNG INTRO VÀ KHỞI TẠO ---
+    document.addEventListener('DOMContentLoaded', function() {
+        checkApiKey(); // Kiểm tra Key API khi tải trang
+        
+        // Kích hoạt hiệu ứng Intro
+        setTimeout(() => {
+            document.body.classList.add('loaded');
+        }, 50); 
+    });
 </script>
 
 </body>
